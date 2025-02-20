@@ -1,3 +1,3 @@
-# LLM Wrappers with LangChain
+# LLM Facades
 
-A framework for creating composable LLM interfaces that integrate seamlessly with LangChain. This allows you to create sophisticated LLM workflows while maintaining compatibility with LangChain's ecosystem.
+A framework for creating composable LLM interfaces. This allows you to create sophisticated LLM workflows.
