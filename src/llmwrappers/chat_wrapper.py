@@ -4,20 +4,16 @@ from typing import Any, AsyncGenerator, Type, TypeVar, Union
 
 from pydantic import BaseModel, TypeAdapter
 
+from .base_wrapper import LLMWrapper
+from .wrapper_utils import compile_user_prompt, parse_block_response, parse_obj_response
 
-
-from .llm_facade import LLMFacade
-from .facade_utils import compile_user_prompt, parse_block_response, parse_obj_response
-
-__all__ = ["ChatFacade"]
+__all__ = ["ChatWrapper"]
 
 T = TypeVar("T", bound=BaseModel)
 S = TypeVar("S", bound=Union[str, T])
 
 
-class ChatFacade(LLMFacade, ABC):
-    conversational: bool = False
-
+class ChatWrapper(LLMWrapper, ABC):
     def __init__(self, conversational=False, **kwargs) -> None:
         super().__init__(**kwargs)
         self.conversational = conversational
@@ -37,10 +33,8 @@ class ChatFacade(LLMFacade, ABC):
             str: Response text chunks from the LLM
         """
         ...
-    
-    
 
-    async def query_response(self, **kwargs) -> str:
+    async def query_response(self, **kwargs) -> tuple[str, int]:
         prompt_args = {k: v for k, v in kwargs.items() if k == k.upper()}
         api_args = {k: v for k, v in kwargs.items() if k != k.upper()}
 
@@ -48,10 +42,7 @@ class ChatFacade(LLMFacade, ABC):
             api_args.setdefault("messages", []), prompt_args
         )
 
-        if "stream" in api_args:
-            assert api_args["stream"] == False
-        else:
-            api_args["stream"] = False
+        api_args["stream"] = False
 
         result = []
         async for chunk in self.query(**api_args):
@@ -67,10 +58,7 @@ class ChatFacade(LLMFacade, ABC):
             api_args.setdefault("messages", []), prompt_args
         )
 
-        if "stream" in api_args:
-            assert api_args["stream"] == True
-        else:
-            api_args["stream"] = True
+        api_args["stream"] = True
 
         async for chunk in self.query(**api_args):
             yield chunk
@@ -104,6 +92,25 @@ class ChatFacade(LLMFacade, ABC):
         response = await self.query_response(**api_args)
 
         return parse_block_response(block_type, response)
+
+    async def query_continuation(self, prompt: str, **kwargs) -> str:
+        prompt_args = {k: v for k, v in kwargs.items() if k == k.upper()}
+        api_args = {k: v for k, v in kwargs.items() if k != k.upper()}
+
+        await self._update_messages_with_prompt_args(
+            api_args.setdefault("messages", []), prompt_args
+        )
+        api_args.setdefault("messages", []).extend(
+            [
+                {"role": "assistant", "content": prompt},
+                {
+                    "role": "user",
+                    "content": "Please continue. Just the continuation, nothing else.",
+                },
+            ]
+        )
+
+        return await self.query_response(**api_args)
 
     async def _update_messages_with_prompt_args(
         self, messages: list[dict[str, str]], prompt_args: dict[str, Any]

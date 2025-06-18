@@ -1,10 +1,10 @@
 from cerebras.cloud.sdk import AsyncCerebras, AsyncStream
 from cerebras.cloud.sdk.types.chat.chat_completion import CompletionCreateResponse
 
-from .llm_facade.oai_facade import OAIFacade
+from ..oai_wrapper import OAIWrapper
 
 
-class CerebrasFacade(OAIFacade):
+class CerebrasWrapper(OAIWrapper):
     """
     An asynchronous implementation of ChatEngine for interacting with Cerebras models.
 
@@ -14,6 +14,8 @@ class CerebrasFacade(OAIFacade):
         model (str): The name of the Cerebras model to use.
         client (AsyncCerebras): An instance of the asynchronous Cerebras client for API interactions.
 
+    Inherits from:
+        AsyncChatEngine
     """
 
     def __init__(self, model: str, *args, **kwargs) -> None:

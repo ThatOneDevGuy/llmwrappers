@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "standalone_facade"
+name = "llmwrappers"
 version = "0.1.0"
 description = ""
 authors = [
@@ -12,6 +12,8 @@ python = "^3.11"
 pydantic = "^2.10.6"
 cerebras_cloud_sdk = "1.21.0"
 openai = "^1.63.2"
+fastapi-poe = "^0.0.62"
+anthropic = "^0.54.0"
 
 
 [tool.poetry.group.dev.dependencies]

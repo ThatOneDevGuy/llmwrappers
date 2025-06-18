@@ -3,18 +3,23 @@ from typing import AsyncGenerator
 
 from openai.types.chat.chat_completion import ChatCompletion
 
-from .chat_facade import ChatFacade
-from .facade_utils import compile_user_prompt
+from .base_wrapper import LLMMetrics, tracks_metrics
+
+from .chat_wrapper import ChatWrapper
+from .wrapper_utils import compile_user_prompt
 
 
-class OAIFacade(ChatFacade, ABC):
+class OAIWrapper(ChatWrapper, ABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     @abstractmethod
     async def create(self, **kwargs) -> ChatCompletion: ...
 
-    async def query(self, **kwargs) -> AsyncGenerator[str, None]:
+    @tracks_metrics
+    async def query(
+        self, *, metrics: LLMMetrics, **kwargs
+    ) -> AsyncGenerator[str, None]:
         api_args = {k: v for k, v in kwargs.items() if k.upper() != k}
         prompt_args = {k: v for k, v in kwargs.items() if k == k.upper()}
 
@@ -42,6 +47,7 @@ class OAIFacade(ChatFacade, ABC):
 
             # Else the model is responding directly to the user
             if finish_reason in ("stop", "eos"):
+                metrics.tokens_consumed += tokens_consumed
                 yield response.choices[0].message.content
 
             # Catch any other case, this is unexpected
@@ -51,6 +57,15 @@ class OAIFacade(ChatFacade, ABC):
             api_args["stream_options"] = {"include_usage": True}
 
             async for chunk in await self.create(**api_args):
+                if metrics is not None:
+                    if hasattr(chunk, "usage") and chunk.usage is not None:
+                        # With include_usage, the final chunk object should include the total tokens consumed
+                        # So we can override our default assumption of 1 token on the final chunk
+                        metrics.tokens_consumed = chunk.usage.total_tokens
+                    else:
+                        # By default, assume 1 token per chunk
+                        metrics.tokens_consumed += 1
+
                 if chunk.choices:
                     if chunk.choices[0].delta.content:
                         yield chunk.choices[0].delta.content
