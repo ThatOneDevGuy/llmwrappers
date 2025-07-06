@@ -14,10 +14,12 @@ cerebras_cloud_sdk = "1.21.0"
 openai = "^1.63.2"
 fastapi-poe = "^0.0.62"
 anthropic = "^0.54.0"
+mcp = "^1.9.4"
+fireworks-ai = "^0.17.18"
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.7.3"
+ruff = "*"
 
 [build-system]
 requires = ["poetry-core"]

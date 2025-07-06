@@ -89,6 +89,13 @@ def _convert_to_xml(obj, prefix=None, indent=0) -> str:
         return indent_str + xml_escape(str(obj))
 
 
+async def compile_to_string(obj: Any) -> str:
+    """
+    Compile an object to a string.
+    """
+    return _convert_to_xml(await _convert_to_dict(obj), None, 1)
+
+
 async def compile_user_prompt(**kwargs) -> str:
     """
     Compile a user prompt from keyword arguments.
@@ -108,6 +115,25 @@ async def compile_user_prompt(**kwargs) -> str:
 
     return "\n\n".join(prompt_pieces)
 
+
+def generate_schema(response_model: Type[BaseModel] | Type[Any] | str) -> str:
+    schema = None
+    try:
+        if issubclass(response_model, BaseModel):
+            schema = response_model.model_json_schema()
+    except TypeError:
+        pass
+
+    if isinstance(response_model, dict):
+        schema = response_model
+
+    if schema is None:
+        schema = TypeAdapter(response_model).json_schema()
+    
+    if 'type' not in schema:
+        schema['type'] = 'object'
+
+    return schema
 
 def parse_obj_response(response_model: Type[T], content: str) -> T:
     """

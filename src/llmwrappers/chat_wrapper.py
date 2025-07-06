@@ -74,7 +74,11 @@ class ChatWrapper(LLMWrapper, ABC):
             await _generate_obj_query_messages(response_model)
         )
 
-        response = await self.query_response(**api_args)
+        result = []
+        async for chunk in self.query(**api_args):
+            result.append(chunk)
+
+        response = "".join(result)
 
         return parse_obj_response(response_model, response)
 
