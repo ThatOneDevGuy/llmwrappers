@@ -70,42 +70,8 @@ async def main():
 
 
 # Creating LLM Wrappers
-The `llmwrapper` module provides three interfaces for creating LLM Wrappers. These are described below in increasing order of flexibility
+The `llmwrapper` module provides two interfaces for creating LLM Wrappers. These are described below in increasing order of flexibility
 
-
-## `LLMDecorator` base class
-
-The `LLMDecorator` base class lets you create an LLM Wrapper from an existing one when you only need to modify the arguments passed to the underlying one or capture the outputs. This requires only implementing a `hook_query` method that modifies the arguments passed to the underlying LLM. Use the `yield` statement to invoke the underlying LLM and get the final response. If you use this approach, you don't need to worry about handling the underlying LLM API arguments (e.g., how the response changes between `stream=True` and `stream=False`).
-
-```python
-class MyWrapper(LLMDecorator):
-    async def hook_query(self, prompt_args, api_args):
-        modified_prompt_args = {
-            "USER_ARGS": prompt_args,
-            "ADDITIONAL_CONTEXT": "...",
-            "TASK": (
-                "Use the ADDITIONAL_CONTEXT to respond to the user's request "
-                "as specified in USER_ARGS."
-            ),
-        }
-
-        response = yield {
-            **modified_prompt_args,
-            **api_args
-        }
-
-        print(response)
-
-my_llm = MyWrapper(
-    underlying_llm=wrapper_from_chatmodel(
-        ChatOpenAI(model="gpt-4o-mini")
-    )
-)
-
-print(await my_llm.query_response(
-    TASK="How does modern photolithography exposure work?"
-))
-```
 
 ## `ChatWrapper` base class
 The `ChatWrapper` base class lets you create an LLM Wrapper from an LLM chat model. This requires only implementing a `query` method that accepts a chat history involving system and user roles and a flag for streaming responses. Regardless of whether the caller wants streaming responses, the `query` method yields a stream of chunks. In the case of non-streaming responses, it yields a single chunk with the entire response. All popular LLM providers expose an interface that's compatible with this class.
