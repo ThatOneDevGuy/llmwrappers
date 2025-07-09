@@ -1,3 +1,5 @@
+import os
+
 from openai import AsyncOpenAI, AsyncStream
 from openai.types.chat.chat_completion import ChatCompletion
 
@@ -32,7 +34,7 @@ class TogetherWrapper(OAIWrapper):
         self.model = model
         self.client = AsyncOpenAI(
             base_url="https://api.together.xyz/v1",
-            api_key=kwargs.get("api_key")
+            api_key=kwargs.get("api_key") or os.environ.get("TOGETHER_API_KEY"),
         )
 
     async def create(
@@ -50,3 +52,4 @@ class TogetherWrapper(OAIWrapper):
         """
         kwargs["model"] = self.model
         return await self.client.chat.completions.create(**kwargs)
+

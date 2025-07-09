@@ -1,3 +1,4 @@
+import os
 from openai import AsyncOpenAI, AsyncStream
 from openai.types.chat.chat_completion import ChatCompletion
 
@@ -31,7 +32,7 @@ class GroqWrapper(OAIWrapper):
         self.model = model
         self.client = AsyncOpenAI(
             base_url="https://api.groq.com/openai/v1",
-            api_key=kwargs.get("api_key")
+            api_key=kwargs.get("api_key") or os.environ.get("GROQ_API_KEY"),
         )
 
     async def create(
@@ -53,3 +54,5 @@ class GroqWrapper(OAIWrapper):
             del kwargs["stream_options"]
 
         return await self.client.chat.completions.create(**kwargs)
+
+
