@@ -9,13 +9,12 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pydantic = "^2.10.6"
-cerebras_cloud_sdk = "^1.21.0"
-openai = "^1.63.2"
-fastapi-poe = "^0.0.62"
-anthropic = "^0.54.0"
-mcp = "^1.9.4"
-fireworks-ai = "^0.17.18"
+cerebras_cloud_sdk = "*"
+openai = "*"
+fastapi-poe = "*"
+anthropic = "*"
+mcp = "*"
+fireworks-ai = "*"
 
 
 [tool.poetry.group.dev.dependencies]
